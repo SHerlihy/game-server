@@ -52,7 +52,7 @@ io.on("connection", (socket) => {
     game[gameID].clients.push(cliID);
     console.log(game[gameID].clients);
 
-    io.in(gameID).emit("joining-game", {
+    socket.emit("joining-game", {
       joinGame: game[gameID],
     });
   });
