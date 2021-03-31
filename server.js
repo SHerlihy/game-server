@@ -47,10 +47,9 @@ io.on("connection", (socket) => {
     socket.join(gameID);
     const cliID = uuidv4();
     const ourGame = game[gameID];
-    game[gameID][cliID] = "spectator";
+    game[gameID].cliID = "spectator";
 
     game[gameID].clients.push(cliID);
-    console.log(game[gameID].clients);
 
     socket.emit("joining-game", {
       joinGame: game[gameID],
@@ -59,13 +58,8 @@ io.on("connection", (socket) => {
 
   socket.on("set-role", ({ id, myID, role }) => {
     game[id][myID] = role;
-    io.in(id).emit("setting-role", game[id]);
-  });
-
-  socket.on("get-position", () => {
-    socket.emit("update-position", {
-      position,
-    });
+    console.log(game[id]);
+    io.to(game[id].gameID).emit("update-game", game[id]);
   });
 
   socket.on("submit-total", ({ total, cliID, gameID }) => {
@@ -73,22 +67,23 @@ io.on("connection", (socket) => {
       game[gameID][game[gameID][cliID]] = total;
     }
 
-    if (game[gameID][p1] && game[gameID][p2]) {
-      if (game[gameID][p1] === game[gameID][p2]) {
-        game[gameID][p1] = null;
-        game[gameID][p2] = null;
+    if (game[gameID].p1 && game[gameID].p2) {
+      if (game[gameID].p1 === game[gameID].p2) {
+        game[gameID].p1 = null;
+        game[gameID].p2 = null;
       }
-      if (game[gameID][p1] < game[gameID][p2]) {
-        game[gameID][position] = game[gameID][position] - 1;
-        game[gameID][p1] = null;
-        game[gameID][p2] = null;
+      if (game[gameID].p1 < game[gameID].p2) {
+        game[gameID].position = game[gameID].position - 1;
+        game[gameID].p1 = null;
+        game[gameID].p2 = null;
       }
-      if (game[gameID][p1] > game[gameID][p2]) {
-        game[gameID][position] = game[gameID][position] + 1;
-        game[gameID][p1] = null;
-        game[gameID][p2] = null;
+      if (game[gameID].p1 > game[gameID].p2) {
+        game[gameID].position = game[gameID].position + 1;
+        game[gameID].p1 = null;
+        game[gameID].p2 = null;
       }
-      io.in(gameID).emit({ gameID: game[gameID] });
+      console.log(game[gameID]);
+      io.in(`${gameID}`).emit("update-game", game[gameID]);
     }
     // game[role] = total;
     // if (game["p1"] && game["p2"]) {
