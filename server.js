@@ -12,15 +12,7 @@ const io = require("socket.io")(http, {
 
 http.listen(8080);
 
-const clients = {};
-let game = {};
-let position = 3;
-
-console.log("running");
-
-app.get("/", (req, res) => {
-  console.log("fuck you");
-});
+const game = {};
 
 io.on("connection", (socket) => {
   console.log("connected");
@@ -59,44 +51,39 @@ io.on("connection", (socket) => {
   socket.on("set-role", ({ id, myID, role }) => {
     game[id][myID] = role;
     console.log(game[id]);
-    io.to(game[id].gameID).emit("update-game", game[id]);
+    io.to(game[id].gameID).emit("role-update", { gameUpdate: game[id] });
   });
 
   socket.on("submit-total", ({ total, cliID, gameID }) => {
+    let reset = false;
     if (game[gameID][cliID] !== "spectator") {
       game[gameID][game[gameID][cliID]] = total;
+      console.log(game[gameID].p1);
     }
 
     if (game[gameID].p1 && game[gameID].p2) {
       if (game[gameID].p1 === game[gameID].p2) {
         game[gameID].p1 = null;
         game[gameID].p2 = null;
+        reset = true;
       }
       if (game[gameID].p1 < game[gameID].p2) {
         game[gameID].position = game[gameID].position - 1;
         game[gameID].p1 = null;
         game[gameID].p2 = null;
+        reset = true;
       }
       if (game[gameID].p1 > game[gameID].p2) {
         game[gameID].position = game[gameID].position + 1;
         game[gameID].p1 = null;
         game[gameID].p2 = null;
+        reset = true;
       }
-      console.log(game[gameID]);
-      io.in(`${gameID}`).emit("update-game", game[gameID]);
     }
-    // game[role] = total;
-    // if (game["p1"] && game["p2"]) {
-    //   if (game["p1"] === game["p2"]) {
-    //     return (game = {});
-    //   }
-    //   game["p1"] > game["p2"]
-    //     ? (position = position - 1)
-    //     : (position = position + 1);
-    //   console.log(position);
-
-    //   socket.emit("update-position", position);
-    //   game = {};
-    // }
+    console.log(game[gameID]);
+    io.in(`${gameID}`).emit("roll-update", {
+      gameUpdate: game[gameID],
+      resetting: reset,
+    });
   });
 });
